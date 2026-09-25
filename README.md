@@ -5,7 +5,7 @@
 ## Elementos do Grupo
 
 | Nome | Número |
-| :--- | :--- |
-| Simão Almeida | A52537 |
-| Victor Gorincioi | 52545 |
-| Guilherme Santos | 52673 |
+| :--- |:-------|
+| Simão Almeida | 52537  |
+| Victor Gorincioi | 52545  |
+| Guilherme Santos | 52673  |
