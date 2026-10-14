@@ -23,6 +23,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:label="Settings"
+            android:theme="@style/Theme.DroidMentor" />
+
+        <activity
+            android:name=".ui.about.AboutActivity"
+            android:label="About"
+            android:theme="@style/Theme.DroidMentor" />
+
     </application>
 
 </manifest>
