@@ -19,6 +19,9 @@ import com.example.droidmentor.ui.about.AboutActivity
 import com.example.droidmentor.ui.settings.SettingsActivity
 import com.example.droidmentor.ui.theme.DroidMentorTheme
 
+const val APP_TAG = "DroidMentorApp"
+fun buildLLogTag(className: String) = "$APP_TAG.$className"
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
