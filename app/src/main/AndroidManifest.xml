@@ -14,17 +14,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DroidMentor">
         <activity
-            android:name=".active_chat.ActiveChatActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.DroidMentor"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.DroidMentor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".active_chat.ActiveChatActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.DroidMentor"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.history.ChatHistoryActivity"
+            android:label="@string/chat_history_title"
+            android:theme="@style/Theme.DroidMentor" />
 
         <activity
             android:name=".ui.settings.SettingsActivity"

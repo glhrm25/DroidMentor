@@ -31,12 +31,13 @@ import com.example.droidmentor.R
 @Composable
 fun ActiveChatScreen(
     modifier: Modifier = Modifier,
-    viewModel: ActiveChatViewModel
+    viewModel: ActiveChatViewModel,
+    onNavigateBack: () -> Unit = {}
 ) {
     ActiveChatScreenContent(
         messages = viewModel.messages.collectAsState().value,
         onSendMessage = { msg -> viewModel.sendMessage(msg) },
-        onNavigateBack = { /* TO-DO */ },
+        onNavigateBack = onNavigateBack,
         isLoading = viewModel.isLoading.collectAsState().value,
         modifier = modifier
     )

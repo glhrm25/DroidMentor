@@ -31,7 +31,8 @@ class ActiveChatActivity: ComponentActivity() {
         setContent {
             DroidMentorTheme {
                 ActiveChatScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateBack = { finish() }
                 )
             }
         }

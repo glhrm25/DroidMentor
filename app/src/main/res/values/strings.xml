@@ -3,4 +3,27 @@
     <string name="back_button_desc">Back</string>
     <string name="chat_textBar_placeHolder">Ask the mentor for help...</string>
     <string name="message_send_button_desc">Send</string>
+
+    <!-- Title Screen -->
+    <string name="title_tagline">Your Senior Android Engineering Mentor</string>
+    <string name="menu_new_chat">New Chat</string>
+    <string name="menu_new_chat_desc">Start a new conversation with your mentor</string>
+    <string name="menu_chat_history">Chat History</string>
+    <string name="menu_chat_history_desc">Browse your saved conversations</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_settings_desc">Configure your Gemini API key</string>
+    <string name="menu_about">About</string>
+    <string name="menu_about_desc">Learn more about DroidMentor</string>
+
+    <!-- Chat History Screen -->
+    <string name="chat_history_title">Chat History</string>
+    <string name="chat_history_empty_title">No Conversations Yet</string>
+    <string name="chat_history_empty_subtitle">Start a conversation to get advice on Android development and best practices.</string>
+    <string name="chat_history_new_chat_button">Start a Conversation</string>
+    <string name="delete_conversation_title">Delete Conversation</string>
+    <string name="delete_conversation_message">Are you sure you want to delete this conversation? All messages will be permanently removed.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_button_desc">Delete conversation</string>
+    <string name="new_chat_button_desc">Start new conversation</string>
 </resources>
