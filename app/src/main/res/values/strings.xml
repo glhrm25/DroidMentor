@@ -1,8 +1,14 @@
 <resources>
     <string name="app_name">DroidMentor</string>
+
+    <!-- Active Chat Screen -->
     <string name="back_button_desc">Back</string>
-    <string name="chat_textBar_placeHolder">Ask the mentor for help...</string>
+    <string name="chat_textBar_placeHolder">Ask the Mentor…</string>
     <string name="message_send_button_desc">Send</string>
+    <string name="message_stop_button_desc">Stop</string>
+    <string name ="retry_last_request_button_desc">Retry</string>
+    <string name="active_chat_ignore_error_button_desc">Ignore</string>
+    <string name="active_chat_default_error_message">An error happened while trying to communicate with mentor. %1$s</string>
 
     <!-- Title Screen -->
     <string name="title_tagline">Your Senior Android Engineering Mentor</string>

@@ -1,44 +1,54 @@
-package com.example.droidmentor.active_chat
+package com.example.droidmentor.ui.chat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.droidmentor.R
+import androidx.compose.runtime.collectAsState
+import com.example.droidmentor.data.model.chat.ChatMessage
+import com.example.droidmentor.data.model.chat.Role
+import com.example.droidmentor.ui.chat.components.ChatBubble
+import com.example.droidmentor.ui.chat.components.ChatErrorBanner
+import com.example.droidmentor.ui.chat.components.ChatInputBar
 
 
 /**
  * Stateful composable that acts as the entry point for the chat screen.
- * It is responsible for connecting the [ActiveChatViewModel] to the UI, observing
- * data streams (StateFlow), and passing them to the stateless visual component.
+ * It connects the [ActiveChatViewModel] to the UI: it observes the ViewModel's
+ * state ([ChatUIState]) and forwards the user's actions (send, retry, dismiss
+ * error, stop) to the ViewModel, delegating all rendering to the stateless
+ * [ActiveChatScreenContent].
  *
  * @param modifier Modifier for layout adjustments on the main container.
  * @param viewModel The ViewModel that manages business logic and the Gemini API state.
+ * @param onNavigateBack Callback triggered to navigate back to the previous screen.
  */
 @Composable
 fun ActiveChatScreen(
     modifier: Modifier = Modifier,
     viewModel: ActiveChatViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit
 ) {
+    val state by viewModel.state.collectAsState()
+
     ActiveChatScreenContent(
-        messages = viewModel.messages.collectAsState().value,
-        onSendMessage = { msg -> viewModel.sendMessage(msg) },
+        messages = state.messages,
+        onSendMessage = viewModel::sendMessage,
         onNavigateBack = onNavigateBack,
-        isLoading = viewModel.isLoading.collectAsState().value,
+        status = state.status,
+        onRetry =  viewModel::retryLastRequest,
+        onDismiss = viewModel::dismissError,
+        onStop = viewModel::cancelResponse,
         modifier = modifier
     )
 }
@@ -47,12 +57,19 @@ fun ActiveChatScreen(
 /**
  * Stateless composable that builds the chat's visual structure.
  * It contains the top app bar, the message list (with automatic scrolling
- * to the latest message), and the bottom input bar.
+ * to the latest message), the error dialog shown when [status] is an error,
+ * and the bottom input bar, whose action button switches between send and stop
+ * depending on [status].
  *
  * @param messages The current list of messages in the chat history.
  * @param onSendMessage Callback triggered when the user sends a new message.
  * @param onNavigateBack Callback triggered to navigate back to the previous screen.
- * @param isLoading Indicates whether the app is waiting for an API response (shows the spinning icon).
+ * @param status The current state of the chat (idle, loading, receiving or error).
+ * It determines whether the stop button is shown and whether sending is allowed.
+ * @param onRetry Callback invoked to resend the last message after an error occurs.
+ * @param onDismiss Callback invoked to clear the current error state and hide the error message.
+ * @param onStop Callback invoked when the user taps the stop button to cancel the
+ * response being generated.
  * @param modifier Modifier for the Scaffold root.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,18 +78,38 @@ fun ActiveChatScreenContent(
     messages: List<ChatMessage>,
     onSendMessage: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    isLoading: Boolean,
+    status: ChatStatus,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+    onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Controls the list state so we can scroll ???
     val listState = rememberLazyListState()
-
     var inputText by remember { mutableStateOf("") }
+    val lastMessageLength = messages.lastOrNull()?.text?.length ?: 0
+
+    val isWaiting = status is ChatStatus.Loading
+    val isReceiving = status is ChatStatus.Receiving
+    val isGenerating = isWaiting || isReceiving
 
     // Scrolls to the bottom everytime there's a new message
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // TODO: Rever isto (scroll automatico conforme vai chegando a mensagem)
+    LaunchedEffect(lastMessageLength, status) {
+        // !listState.isScrollInProgress -> User is not scrolling
+        if (isReceiving && !listState.isScrollInProgress) {
+            // scrollOffset = Int.MAX_VALUE guarantees that the UI follows the new messages, even if it leaves the screen
+            withFrameNanos { }
+            val totalItems = listState.layoutInfo.totalItemsCount
+            if (totalItems > 0) {
+                listState.scrollToItem(totalItems - 1)
+            }
         }
     }
 
@@ -98,17 +135,29 @@ fun ActiveChatScreenContent(
             )
         },
         bottomBar = {
-            ChatInputBar(
-                text = inputText,
-                onTextChanged = { inputText = it },
-                onSendClicked = {
-                    if (inputText.isNotBlank()) {
-                        onSendMessage(inputText)
-                        inputText = ""
-                    }
-                },
-                isLoading = isLoading
-            )
+            Column{
+                if (status is ChatStatus.Error) {
+                    ChatErrorBanner(
+                        message = stringResource(id = status.messageId, status.detailedMessage),
+                        onRetry = onRetry,
+                        onDismiss = onDismiss
+                    )
+                }
+
+                ChatInputBar(
+                    text = inputText,
+                    onTextChanged = { inputText = it },
+                    onSend = {
+                        if (inputText.isNotBlank()) {
+                            onSendMessage(inputText)
+                            inputText = ""
+                        }
+                    },
+                    sendEnabled = !isGenerating,
+                    onStop = onStop,
+                    isGenerating = isGenerating
+                )
+            }
         }
     ) { innerPadding ->        // space left between top bar and bottom bar
         LazyColumn(
@@ -124,7 +173,7 @@ fun ActiveChatScreenContent(
                 ChatBubble(message = message)
             }
 
-            if (isLoading) {
+            if (isWaiting) {
                 item {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -137,110 +186,14 @@ fun ActiveChatScreenContent(
                     }
                 }
             }
+
+            item(key = "bottom_spacer") {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }
 
-
-/**
- * Visual component that draws a single message bubble.
- * Its design (alignment, colors, and corner shape) adapts
- * depending on whether the sender is the user or the model (Mentor).
- *
- * @param message The data object containing the message text and the sender's identity.
- */
-@Composable
-fun ChatBubble(message: ChatMessage) {
-    val backgroundColor: Color
-    val textColor: Color
-    val alignment: Arrangement.Horizontal
-    val shape: RoundedCornerShape
-
-    if (message.sender == Role.USER) {
-        backgroundColor = MaterialTheme.colorScheme.primary
-        textColor = MaterialTheme.colorScheme.onPrimary
-        alignment = Arrangement.End
-        shape = RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
-    } else {
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
-        textColor = MaterialTheme.colorScheme.onSurfaceVariant
-        alignment = Arrangement.Start
-        shape = RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = alignment
-    ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(color = backgroundColor, shape = shape)
-                .padding(horizontal = 16.dp, vertical = 10.dp)
-        ) {
-            Text(
-                text = message.text,
-                color = textColor,
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
-
-
-/**
- * Bottom bar where the user types and sends messages.
- * It automatically handles the keyboard rising ([imePadding]) and manages
- * the send button's enabled/disabled state.
- *
- * @param text The text currently typed in the input field.
- * @param onTextChanged Callback triggered whenever the typed text changes.
- * @param onSendClicked Callback triggered when the user taps the send button.
- * @param isLoading Determines if the button should be disabled while the model generates a response.
- */
-@Composable
-fun ChatInputBar(
-    text: String,
-    onTextChanged: (String) -> Unit,
-    onSendClicked: () -> Unit,
-    isLoading: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .navigationBarsPadding()
-            .imePadding(),           // Pushes the bar up when the keyboard is open
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChanged,
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(stringResource(R.string.chat_textBar_placeHolder)) },
-            shape = RoundedCornerShape(24.dp),
-            maxLines = 4        // The text box grows vertically if the text is too long
-        )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        IconButton(
-            onClick = onSendClicked,
-            enabled = text.isNotBlank() && !isLoading,
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = stringResource(R.string.message_send_button_desc)
-            )
-        }
-    }
-}
 
 @Preview(showBackground = true, name = "Normal chat")
 @Composable
@@ -255,12 +208,15 @@ fun ActiveChatScreenPreview() {
 
         ActiveChatScreenContent(
             messages = dummyMessages,
-            isLoading = false,
+            status = ChatStatus.Idle,
             onSendMessage = { msg ->
                 dummyMessages.add(ChatMessage(msg, Role.USER))
                 dummyMessages.add(ChatMessage("This is a preview of an answer from the mentor", Role.MODEL))
             },
-            onNavigateBack = {}
+            onRetry = {},
+            onDismiss = {},
+            onNavigateBack = {},
+            onStop = {}
         )
     }
 }
@@ -277,9 +233,37 @@ fun ActiveChatScreenLoadingPreview() {
 
         ActiveChatScreenContent(
             messages = dummyMessages,
-            isLoading = true,
+            status = ChatStatus.Loading,
             onSendMessage = { },
-            onNavigateBack = {}
+            onRetry = {},
+            onDismiss = {},
+            onNavigateBack = {},
+            onStop = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Chat error")
+@Composable
+fun ActiveChatScreenErrorPreview() {
+    MaterialTheme {
+        val dummyMessages = remember {
+            mutableStateListOf(
+                ChatMessage("Hello mentor!", Role.USER)
+            )
+        }
+
+        ActiveChatScreenContent(
+            messages = dummyMessages,
+            status = ChatStatus.Error(
+                messageId = R.string.active_chat_default_error_message,
+                detailedMessage = "Não foi possível obter resposta. Verifica a ligação."
+            ),
+            onSendMessage = {},
+            onNavigateBack = {},
+            onRetry = {},
+            onDismiss = {},
+            onStop = {}
         )
     }
 }

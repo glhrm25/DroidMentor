@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import com.example.droidmentor.active_chat.ActiveChatActivity
+import com.example.droidmentor.ui.chat.ActiveChatActivity
 import com.example.droidmentor.data.local.AppDatabase
 import com.example.droidmentor.data.repository.ConversationRepository
 import com.example.droidmentor.ui.theme.DroidMentorTheme

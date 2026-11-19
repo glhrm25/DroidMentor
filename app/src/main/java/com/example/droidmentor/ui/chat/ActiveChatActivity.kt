@@ -1,4 +1,4 @@
-package com.example.droidmentor.active_chat
+package com.example.droidmentor.ui.chat
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.example.droidmentor.buildLLogTag
+import com.example.droidmentor.preferences.DependenciesContainer
 import com.example.droidmentor.ui.theme.DroidMentorTheme
 
 
@@ -20,7 +21,18 @@ class ActiveChatActivity: ComponentActivity() {
         }
     }
 
-    private val viewModel by viewModels<ActiveChatViewModel>()
+    /**
+     * The dependencies to be used.
+     */
+    private val dependencies: DependenciesContainer by lazy {
+        application as DependenciesContainer
+    }
+
+    private val viewModel: ActiveChatViewModel by viewModels {
+        ActiveChatViewModel.factory(
+            chatApiService = dependencies.apiService
+        )
+    }
 
     private val logTag = buildLLogTag(this::class.java.simpleName)
 
