@@ -1,114 +1,70 @@
 package com.example.droidmentor.data.repository
 
-import com.example.droidmentor.data.local.dao.ConversationDao
-import com.example.droidmentor.data.local.dao.MessageDao
 import com.example.droidmentor.data.local.entity.ConversationEntity
 import com.example.droidmentor.data.local.entity.MessageEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Repository providing an abstraction layer over local Room persistence
- * for conversations and messages.
+ * Contract for the persistence of conversations (chat sessions) and their messages.
  *
- * @property conversationDao DAO for conversation operations.
- * @property messageDao DAO for message operations.
+ * Implementations:
+ * - [RoomConversationRepository]: production implementation backed by Room.
+ * - [FakeConversationRepository]: in-memory implementation for tests and previews.
  */
-class ConversationRepository(
-    private val conversationDao: ConversationDao,
-    private val messageDao: MessageDao
-) {
+interface ConversationRepository {
 
     /**
      * Observable stream of all conversations ordered by recent activity.
      */
-    val allConversations: Flow<List<ConversationEntity>> = conversationDao.getAllConversations()
+    val allConversations: Flow<List<ConversationEntity>>
 
     /**
      * Retrieves a single conversation by its ID.
      */
-    suspend fun getConversationById(id: Long): ConversationEntity? {
-        return conversationDao.getConversationById(id)
-    }
+    suspend fun getConversationById(id: Long): ConversationEntity?
 
     /**
      * Retrieves the currently active conversation, if any.
      */
-    suspend fun getActiveConversation(): ConversationEntity? {
-        return conversationDao.getActiveConversation()
-    }
+    suspend fun getActiveConversation(): ConversationEntity?
 
     /**
      * Creates a new conversation with the specified title and returns its ID.
      */
-    suspend fun createConversation(title: String): Long {
-        val now = System.currentTimeMillis()
-        val conversation = ConversationEntity(
-            title = title,
-            createdAt = now,
-            updatedAt = now,
-            isActive = true
-        )
-        return conversationDao.insertConversation(conversation)
-    }
+    suspend fun createConversation(title: String): Long
 
     /**
      * Updates an existing conversation.
      */
-    suspend fun updateConversation(conversation: ConversationEntity) {
-        conversationDao.updateConversation(conversation)
-    }
+    suspend fun updateConversation(conversation: ConversationEntity)
 
     /**
      * Deletes a conversation by its ID.
      */
-    suspend fun deleteConversation(id: Long) {
-        conversationDao.deleteConversationById(id)
-    }
+    suspend fun deleteConversation(id: Long)
 
     /**
      * Sets a conversation as the active session.
      */
-    suspend fun setActiveConversation(id: Long) {
-        conversationDao.clearActiveConversation()
-        conversationDao.setActiveConversation(id)
-    }
+    suspend fun setActiveConversation(id: Long)
 
     /**
      * Clears any active conversation flag.
      */
-    suspend fun clearActiveConversation() {
-        conversationDao.clearActiveConversation()
-    }
+    suspend fun clearActiveConversation()
 
     /**
-     * Observes messages belonging to a conversation.
+     * Observes messages belonging to a conversation, in chronological order.
      */
-    fun getMessages(conversationId: Long): Flow<List<MessageEntity>> {
-        return messageDao.getMessagesForConversation(conversationId)
-    }
+    fun getMessages(conversationId: Long): Flow<List<MessageEntity>>
 
     /**
      * Inserts a message into the conversation and updates the conversation's updatedAt timestamp.
      */
-    suspend fun addMessage(conversationId: Long, role: String, text: String): Long {
-        val now = System.currentTimeMillis()
-        val message = MessageEntity(
-            conversationId = conversationId,
-            role = role,
-            text = text,
-            timestamp = now
-        )
-        val messageId = messageDao.insertMessage(message)
-        getConversationById(conversationId)?.let { conv ->
-            conversationDao.updateConversation(conv.copy(updatedAt = now))
-        }
-        return messageId
-    }
+    suspend fun addMessage(conversationId: Long, role: String, text: String): Long
 
     /**
      * Deletes all messages in a conversation sent after a given timestamp (for editing/rewriting).
      */
-    suspend fun deleteMessagesAfter(conversationId: Long, timestamp: Long) {
-        messageDao.deleteMessagesAfter(conversationId, timestamp)
-    }
+    suspend fun deleteMessagesAfter(conversationId: Long, timestamp: Long)
 }
