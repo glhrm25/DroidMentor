@@ -3,19 +3,33 @@ package com.example.droidmentor.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDebouce: Duration = 10.milliseconds
+
 ) {
-    val apiKey by viewModel.apiKey.collectAsState()
+    var  apiKey by remember { mutableStateOf("") }
+
+
+    LaunchedEffect(apiKey) {
+        if (apiKey != "" && apiKey.length > 30){
+                viewModel.updateApiKey(apiKey)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -44,7 +58,7 @@ fun SettingsScreen(
             )
             OutlinedTextField(
                 value = apiKey,
-                onValueChange = viewModel::updateApiKey,
+                onValueChange = { apiKey = it },
                 label = { Text("API Key") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true

@@ -19,6 +19,7 @@ import com.example.droidmentor.active_chat.ActiveChatActivity
 import com.example.droidmentor.ui.about.AboutActivity
 import com.example.droidmentor.ui.history.ChatHistoryActivity
 import com.example.droidmentor.ui.settings.SettingsActivity
+
 import com.example.droidmentor.ui.theme.DroidMentorTheme
 import com.example.droidmentor.ui.title.TitleScreen
 

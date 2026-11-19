@@ -35,6 +35,7 @@ class SettingsViewModel(
     }
 
     @Suppress("UNCHECKED_CAST")
+    /** Ensina a framework como instanciar parametros no viewmodel*/
     class Factory(private val repository: PreferencesRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
