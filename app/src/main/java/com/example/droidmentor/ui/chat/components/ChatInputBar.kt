@@ -45,8 +45,7 @@ import com.example.droidmentor.R
  * is pending). The send button is also disabled when [text] is blank.
  * @param onStop Callback triggered when the user taps the stop button to cancel
  * the response being generated.
- * @param isGenerating Whether the model is currently generating a response. When true,
- * the stop button is shown instead of the send button.
+ * @param stopEnabled When true, the stop button is shown instead of the send button.
  */
 @Composable
 fun ChatInputBar(
@@ -55,7 +54,7 @@ fun ChatInputBar(
     onSend: () -> Unit,
     sendEnabled: Boolean,
     onStop: () -> Unit,
-    isGenerating: Boolean
+    stopEnabled: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -76,7 +75,7 @@ fun ChatInputBar(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        AnimatedContent(targetState = isGenerating) { generating ->
+        AnimatedContent(targetState = stopEnabled) { generating ->
             if (generating) {
                 IconButton(
                     onClick = onStop,
@@ -128,7 +127,7 @@ private fun ChatInputBarActivePreview() {
                 onSend = {},
                 sendEnabled = inputText.isNotBlank(),
                 onStop = {},
-                isGenerating = false
+                stopEnabled = false
             )
         }
     }
@@ -150,7 +149,7 @@ private fun ChatInputBarLoadingPreview() {
                 onSend = {},
                 sendEnabled = false,
                 onStop = {},
-                isGenerating = true
+                stopEnabled = true
             )
         }
     }

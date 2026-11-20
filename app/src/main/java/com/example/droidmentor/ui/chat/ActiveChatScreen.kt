@@ -147,15 +147,15 @@ fun ActiveChatScreenContent(
                 ChatInputBar(
                     text = inputText,
                     onTextChanged = { inputText = it },
+                    sendEnabled = status is ChatStatus.Idle,
                     onSend = {
                         if (inputText.isNotBlank()) {
                             onSendMessage(inputText)
                             inputText = ""
                         }
                     },
-                    sendEnabled = !isGenerating,
                     onStop = onStop,
-                    isGenerating = isGenerating
+                    stopEnabled = isGenerating
                 )
             }
         }

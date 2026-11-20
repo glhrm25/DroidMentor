@@ -15,8 +15,10 @@ import com.example.droidmentor.ui.theme.DroidMentorTheme
 class ActiveChatActivity: ComponentActivity() {
 
     companion object {
-        fun navigateFrom(origin: ComponentActivity) {
-            val msg = Intent(origin, ActiveChatActivity::class.java)
+        fun navigateFrom(origin: ComponentActivity, chatId: Long? = null) {
+            val msg = Intent(origin, ActiveChatActivity::class.java).apply {
+                putExtra(ActiveChatViewModel.CHAT_ID_KEY, chatId)
+            }
             origin.startActivity(msg)
         }
     }
@@ -30,7 +32,8 @@ class ActiveChatActivity: ComponentActivity() {
 
     private val viewModel: ActiveChatViewModel by viewModels {
         ActiveChatViewModel.factory(
-            chatApiService = dependencies.apiService
+            chatApiService = dependencies.apiService,
+            conversationRepository = dependencies.conversationRepository
         )
     }
 

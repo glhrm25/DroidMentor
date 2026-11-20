@@ -1,5 +1,6 @@
 package com.example.droidmentor.data.model.chat
 
+import com.example.droidmentor.data.local.entity.MessageEntity
 import com.example.droidmentor.data.services.chat.Content
 import com.example.droidmentor.data.services.chat.Part
 
@@ -28,3 +29,9 @@ data class ChatMessage(
             parts = listOf(Part(text = text))
         )
 }
+
+fun MessageEntity.toChatMessage() =
+    ChatMessage(
+        text = this.text,
+        sender = Role.valueOf(this.role)
+    )
