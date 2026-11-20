@@ -1,17 +1,19 @@
 package com.example.droidmentor.data.services.chat
 
+import com.example.droidmentor.R
 import com.example.droidmentor.data.model.chat.BlockedRequestException
 import com.example.droidmentor.data.model.chat.ChatException
+import com.example.droidmentor.data.model.chat.MissingApiKeyException
 import com.example.droidmentor.data.model.chat.NoConnectivityException
 import com.example.droidmentor.data.model.chat.ParsingException
 import com.example.droidmentor.data.model.chat.RequestTimeoutException
 import com.example.droidmentor.data.model.chat.ResponseTruncatedException
 import com.example.droidmentor.data.model.chat.UnexpectedChatException
+import com.example.droidmentor.preferences.PreferencesRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -27,6 +29,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -44,14 +47,9 @@ private val geminiJson = Json {
     isLenient = true
 }
 
-/**
- * Service class responsible for handling HTTP network communication with the Google Gemini API using Ktor.
- * Encapsulates client configuration, JSON serialization, request logging, and API authentication.
- *
- * @property apiKey The Google Gemini API key used to authenticate requests.
- */
+
 class GeminiApiService(
-    private val apiKey: String
+    private val preferencesRepository: PreferencesRepository
 ): ChatAPIService {
     /**
      * Pre-configured Ktor [HttpClient] instance using the Android engine.
@@ -72,16 +70,17 @@ class GeminiApiService(
             // maxReconnectionAttempts = 4
             // reconnectionTime = 2.seconds
         }
-
-        // Default parameters for every request
-        defaultRequest {
-            header("x-goog-api-key", apiKey)
-            contentType(ContentType.Application.Json)
-        }
     }
 
     override fun generateContentStream(history: List<Content>): Flow<String> =
         flow {
+            val apiKey = preferencesRepository.apiKey
+                .first()
+                ?.takeIf { it.isNotBlank() }
+                ?: throw MissingApiKeyException(
+                    message = R.string.active_chat_missing_key_message.toString()
+                )
+
             val requestBody = GeminiRequest(contents = history)
 
             client.sse(
@@ -89,6 +88,8 @@ class GeminiApiService(
                 request = {
                     method = HttpMethod.Post
                     setBody(requestBody)
+                    header("x-goog-api-key", apiKey)
+                    contentType(ContentType.Application.Json)
                 }
             ) {
                 // incoming events flow

@@ -6,12 +6,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.droidmentor.data.local.AppDatabase
 import com.example.droidmentor.data.repository.ConversationRepository
+import com.example.droidmentor.data.repository.RoomConversationRepository
 import com.example.droidmentor.data.services.chat.ChatAPIService
 import com.example.droidmentor.data.services.chat.GeminiApiService
 import com.example.droidmentor.preferences.DataStorePreferencesRepository
 import com.example.droidmentor.preferences.DependenciesContainer
 import com.example.droidmentor.preferences.PreferencesRepository
-import kotlinx.coroutines.flow.first
 
 
 /** Contexto geral da aplicação que irá fazer ponto de ligação com os repositórios*/
@@ -24,12 +24,12 @@ class DroidMentorApplication : Application(), DependenciesContainer {
     }
 
     override val apiService: ChatAPIService by lazy {
-        GeminiApiService(BuildConfig.GEMINI_API_KEY)
+        GeminiApiService(preferencesRepository)
     }
 
     override val conversationRepository: ConversationRepository by lazy {
         val database = AppDatabase.getInstance(applicationContext)
-        ConversationRepository(
+        RoomConversationRepository(
             conversationDao = database.conversationDao(),
             messageDao = database.messageDao()
         )

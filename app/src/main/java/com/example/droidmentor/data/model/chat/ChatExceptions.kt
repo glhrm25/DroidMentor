@@ -23,3 +23,6 @@ class ResponseTruncatedException(message: String? = null, cause: Throwable? = nu
 
 class RequestTimeoutException(message: String? = null, cause: Throwable? = null) :
     ChatException(message, cause)
+
+class MissingApiKeyException(message: String? = null, cause: Throwable? = null) :
+    ChatException(message, cause)
