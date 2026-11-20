@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.example.droidmentor.ui.chat.ActiveChatActivity
 import com.example.droidmentor.data.local.AppDatabase
-import com.example.droidmentor.data.repository.ConversationRepository
+import com.example.droidmentor.data.repository.RoomConversationRepository
 import com.example.droidmentor.ui.theme.DroidMentorTheme
 
 /**
@@ -32,7 +32,7 @@ class ChatHistoryActivity : ComponentActivity() {
 
     private val viewModel: ChatHistoryViewModel by viewModels {
         val database = AppDatabase.getInstance(applicationContext)
-        val repository = ConversationRepository(
+        val repository = RoomConversationRepository(
             conversationDao = database.conversationDao(),
             messageDao = database.messageDao()
         )
