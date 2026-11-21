@@ -33,4 +33,13 @@
     <string name="cancel">Cancel</string>
     <string name="delete_button_desc">Delete conversation</string>
     <string name="new_chat_button_desc">Start new conversation</string>
+    <string name="conversation_deleted_message">Conversation deleted</string>
+    <string name="undo">Undo</string>
+    <string name="delete_all_button_desc">Delete all conversations</string>
+    <string name="delete_all_conversations_title">Delete All Conversations</string>
+    <string name="delete_all_conversations_message">Are you sure you want to delete every conversation? This action cannot be undone.</string>
+    <string name="delete_all_confirm">Delete All</string>
+
+    <!-- Startup -->
+    <string name="startup_resuming_session">Resuming your last conversation…</string>
 </resources>

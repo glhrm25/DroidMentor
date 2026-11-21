@@ -19,6 +19,9 @@ import com.example.droidmentor.ui.theme.DroidMentorTheme
 class ChatHistoryActivity : ComponentActivity() {
 
     companion object {
+        /**
+         * Intent extra holding the ID of the conversation that the Active Chat screen must display.
+         */
         const val EXTRA_CONVERSATION_ID = "extra_conversation_id"
 
         /**
@@ -27,6 +30,27 @@ class ChatHistoryActivity : ComponentActivity() {
         fun navigateFrom(origin: ComponentActivity) {
             val intent = Intent(origin, ChatHistoryActivity::class.java)
             origin.startActivity(intent)
+        }
+
+        /**
+         * Builds the intent that opens the Active Chat screen for an existing conversation.
+         */
+        fun activeChatIntent(origin: ComponentActivity, conversationId: Long): Intent =
+            Intent(origin, ActiveChatActivity::class.java)
+                .putExtra(EXTRA_CONVERSATION_ID, conversationId)
+
+        /**
+         * Resumes a conversation that was left open when the app was terminated.
+         * Builds the back stack Title -> Chat History -> Active Chat, so that pressing back
+         * from the resumed conversation follows the regular navigation flow.
+         */
+        fun resumeConversationFrom(origin: ComponentActivity, conversationId: Long) {
+            origin.startActivities(
+                arrayOf(
+                    Intent(origin, ChatHistoryActivity::class.java),
+                    activeChatIntent(origin, conversationId)
+                )
+            )
         }
     }
 
@@ -48,10 +72,9 @@ class ChatHistoryActivity : ComponentActivity() {
                     viewModel = viewModel,
                     onNavigateBack = { finish() },
                     onSelectConversation = { conversationId ->
-                        val intent = Intent(this@ChatHistoryActivity, ActiveChatActivity::class.java).apply {
-                            putExtra(EXTRA_CONVERSATION_ID, conversationId)
+                        viewModel.openConversation(conversationId) { id ->
+                            startActivity(activeChatIntent(this@ChatHistoryActivity, id))
                         }
-                        startActivity(intent)
                     },
                     onNewConversation = {
                         ActiveChatActivity.navigateFrom(this@ChatHistoryActivity)
@@ -59,5 +82,15 @@ class ChatHistoryActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    /**
+     * Called when the user comes back to this screen (e.g. presses back on the Active Chat screen).
+     * Leaving the conversation explicitly closes the active session, so it is not resumed on the
+     * next app launch.
+     */
+    override fun onRestart() {
+        super.onRestart()
+        viewModel.endActiveSession()
     }
 }

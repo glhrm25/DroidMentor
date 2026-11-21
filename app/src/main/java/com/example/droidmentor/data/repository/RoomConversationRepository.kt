@@ -4,6 +4,7 @@ import com.example.droidmentor.data.local.dao.ConversationDao
 import com.example.droidmentor.data.local.dao.MessageDao
 import com.example.droidmentor.data.local.entity.ConversationEntity
 import com.example.droidmentor.data.local.entity.MessageEntity
+import com.example.droidmentor.data.model.ConversationSnapshot
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -29,6 +30,7 @@ class RoomConversationRepository(
     }
 
     override suspend fun createConversation(title: String): Long {
+        conversationDao.clearActiveConversation()
         val now = System.currentTimeMillis()
         val conversation = ConversationEntity(
             title = title,
@@ -43,8 +45,22 @@ class RoomConversationRepository(
         conversationDao.updateConversation(conversation)
     }
 
-    override suspend fun deleteConversation(id: Long) {
+    override suspend fun deleteConversation(id: Long): ConversationSnapshot? {
+        val conversation = conversationDao.getConversationById(id) ?: return null
+        val messages = messageDao.getMessagesForConversationSync(id)
         conversationDao.deleteConversationById(id)
+        return ConversationSnapshot(conversation, messages)
+    }
+
+    override suspend fun restoreConversation(snapshot: ConversationSnapshot) {
+        conversationDao.insertConversation(snapshot.conversation.copy(isActive = false))
+        if (snapshot.messages.isNotEmpty()) {
+            messageDao.insertMessages(snapshot.messages)
+        }
+    }
+
+    override suspend fun deleteAllConversations() {
+        conversationDao.deleteAllConversations()
     }
 
     override suspend fun setActiveConversation(id: Long) {

@@ -58,6 +58,12 @@ interface ConversationDao {
     suspend fun deleteConversationById(id: Long): Int
 
     /**
+     * Deletes every conversation. Cascading delete removes all associated messages.
+     */
+    @Query("DELETE FROM conversations")
+    suspend fun deleteAllConversations(): Int
+
+    /**
      * Marks all conversations as inactive.
      */
     @Query("UPDATE conversations SET isActive = 0")
