@@ -33,7 +33,8 @@ class ActiveChatActivity: ComponentActivity() {
     private val viewModel: ActiveChatViewModel by viewModels {
         ActiveChatViewModel.factory(
             chatApiService = dependencies.apiService,
-            conversationRepository = dependencies.conversationRepository
+            conversationRepository = dependencies.conversationRepository,
+            networkMonitor = dependencies.networkMonitor
         )
     }
 

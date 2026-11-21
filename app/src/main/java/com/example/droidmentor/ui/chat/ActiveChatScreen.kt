@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.droidmentor.R
 import androidx.compose.runtime.collectAsState
+import com.example.droidmentor.Networking.StatusInternet
 import com.example.droidmentor.data.model.chat.ChatMessage
 import com.example.droidmentor.data.model.chat.Role
 import com.example.droidmentor.ui.chat.components.ChatBubble
@@ -41,6 +42,7 @@ fun ActiveChatScreen(
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val internetStatus by viewModel.isOnline.collectAsState()
 
     ActiveChatScreenContent(
         messages = state.messages,
@@ -50,6 +52,7 @@ fun ActiveChatScreen(
         onRetry =  viewModel::retryLastRequest,
         onDismiss = viewModel::dismissError,
         onStop = viewModel::cancelResponse,
+        internetStatus = internetStatus,
         modifier = modifier
     )
 }
@@ -83,16 +86,26 @@ fun ActiveChatScreenContent(
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
     onStop: () -> Unit,
+    internetStatus: StatusInternet,
     modifier: Modifier = Modifier
 ) {
-    // Controls the list state so we can scroll ???
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var inputText by remember { mutableStateOf("") }
     val lastMessageLength = messages.lastOrNull()?.text?.length ?: 0
 
     val isWaiting = status is ChatStatus.Loading
     val isReceiving = status is ChatStatus.Receiving
     val isGenerating = isWaiting || isReceiving
+
+    LaunchedEffect(internetStatus) {
+        if (internetStatus is StatusInternet.StatusOff) {
+            snackbarHostState.showSnackbar(
+                message = "Sem ligação à Internet. As mensagens não serão enviadas.",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
 
     // Scrolls to the bottom everytime there's a new message
     LaunchedEffect(messages.size) {
@@ -116,6 +129,7 @@ fun ActiveChatScreenContent(
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
@@ -148,7 +162,7 @@ fun ActiveChatScreenContent(
                 ChatInputBar(
                     text = inputText,
                     onTextChanged = { inputText = it },
-                    sendEnabled = status is ChatStatus.Idle,
+                    sendEnabled = (status is ChatStatus.Idle) && (internetStatus is StatusInternet.StatusOn),
                     onSend = {
                         if (inputText.isNotBlank()) {
                             onSendMessage(inputText)
@@ -225,7 +239,8 @@ fun ActiveChatScreenPreview() {
             onRetry = {},
             onDismiss = {},
             onNavigateBack = {},
-            onStop = {}
+            onStop = {},
+            internetStatus = StatusInternet.StatusOn
         )
     }
 }
@@ -247,7 +262,8 @@ fun ActiveChatScreenLoadingPreview() {
             onRetry = {},
             onDismiss = {},
             onNavigateBack = {},
-            onStop = {}
+            onStop = {},
+            internetStatus = StatusInternet.StatusOn
         )
     }
 }
@@ -272,7 +288,8 @@ fun ActiveChatScreenErrorPreview() {
             onNavigateBack = {},
             onRetry = {},
             onDismiss = {},
-            onStop = {}
+            onStop = {},
+            internetStatus = StatusInternet.StatusOff
         )
     }
 }

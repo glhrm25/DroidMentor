@@ -8,6 +8,8 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.droidmentor.Networking.NetworkMonitor
+import com.example.droidmentor.Networking.StatusInternet
 import com.example.droidmentor.data.services.chat.Content
 import com.example.droidmentor.data.services.chat.GeminiApiService
 import com.example.droidmentor.data.model.chat.ChatMessage
@@ -20,10 +22,12 @@ import com.example.droidmentor.data.services.chat.ChatAPIService
 import com.example.droidmentor.ui.history.ChatHistoryActivity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 
@@ -35,6 +39,7 @@ import kotlinx.coroutines.launch
 class ActiveChatViewModel(
     private val apiService: ChatAPIService,
     private val conversationRepository: ConversationRepository,
+    private val networkMonitor: NetworkMonitor,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
@@ -43,6 +48,11 @@ class ActiveChatViewModel(
     private val chatId get() = savedStateHandle.get<Long>(CHAT_ID_KEY)
     private val _state = MutableStateFlow(ChatUIState())
     val state: StateFlow<ChatUIState> = _state.asStateFlow()
+
+    val isOnline: StateFlow<StatusInternet> = networkMonitor.isOnline
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatusInternet.StatusIdle)
+
+
 
     private var workingJob: Job? = null
 
@@ -108,7 +118,7 @@ class ActiveChatViewModel(
      * the status returns to [ChatStatus.Idle] and [workingJob] is cleared, unless it is an error.
      */
     private fun startGeneration() {
-        if (_state.value.status !is ChatStatus.Idle) {
+        if (_state.value.status !is ChatStatus.Idle && state.value.status !is ChatStatus.Error) {
             return
         }
 
@@ -205,10 +215,11 @@ class ActiveChatViewModel(
 
         fun factory(
             chatApiService: ChatAPIService,
-            conversationRepository: ConversationRepository
+            conversationRepository: ConversationRepository,
+            networkMonitor :  NetworkMonitor
         ): ViewModelProvider.Factory =
             viewModelFactory {
-                initializer { ActiveChatViewModel(chatApiService, conversationRepository, createSavedStateHandle()) }
+                initializer { ActiveChatViewModel(chatApiService, conversationRepository, networkMonitor,createSavedStateHandle()) }
             }
     }
 }

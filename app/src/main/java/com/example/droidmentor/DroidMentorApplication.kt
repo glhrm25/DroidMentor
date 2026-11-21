@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.droidmentor.Networking.NetworkMonitor
 import com.example.droidmentor.data.local.AppDatabase
 import com.example.droidmentor.data.repository.ConversationRepository
 import com.example.droidmentor.data.repository.RoomConversationRepository
@@ -38,5 +39,9 @@ class DroidMentorApplication : Application(), DependenciesContainer {
             conversationDao = database.conversationDao(),
             messageDao = database.messageDao()
         )
+    }
+
+    override val networkMonitor: NetworkMonitor by lazy {
+        NetworkMonitor(applicationContext)
     }
 }
