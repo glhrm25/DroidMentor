@@ -9,9 +9,11 @@ import com.example.droidmentor.data.repository.ConversationRepository
 import com.example.droidmentor.data.repository.RoomConversationRepository
 import com.example.droidmentor.data.services.chat.ChatAPIService
 import com.example.droidmentor.data.services.chat.GeminiApiService
+import com.example.droidmentor.data.services.chat.createApiHttpClient
 import com.example.droidmentor.preferences.DataStorePreferencesRepository
 import com.example.droidmentor.preferences.DependenciesContainer
 import com.example.droidmentor.preferences.PreferencesRepository
+import io.ktor.client.engine.okhttp.OkHttp
 
 
 /** Contexto geral da aplicação que irá fazer ponto de ligação com os repositórios*/
@@ -24,7 +26,10 @@ class DroidMentorApplication : Application(), DependenciesContainer {
     }
 
     override val apiService: ChatAPIService by lazy {
-        GeminiApiService(preferencesRepository)
+        GeminiApiService(
+            client = createApiHttpClient(OkHttp.create()),
+            preferencesRepository = preferencesRepository
+        )
     }
 
     override val conversationRepository: ConversationRepository by lazy {

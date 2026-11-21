@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
@@ -50,7 +49,7 @@ class ActiveChatViewModel(
     init {
         Log.v(logTag, "init on ${hashCode()}")
         viewModelScope.launch {
-            _state.update { current -> current.copy(messages = getStoredMessages()) }
+            _state.set { current -> current.copy(messages = getStoredMessages()) }
         }
     }
 
@@ -76,15 +75,14 @@ class ActiveChatViewModel(
         }
 
         val newMessage = ChatMessage(text = userText, Role.USER)
-        _state.update { current ->
-            current.copy(
-                messages = current.messages + newMessage
-            )
-        }
-
+        _state.set { current -> current.copy(messages = current.messages + newMessage) }
         saveMessage(newMessage)
 
         startGeneration()
+    }
+
+    private inline fun <T> MutableStateFlow<T>.set(transform: (current: T) -> T) {
+        value = transform(value)
     }
 
     private fun saveMessage(msg: ChatMessage) {
@@ -114,9 +112,7 @@ class ActiveChatViewModel(
             return
         }
 
-        _state.update { current ->
-            current.copy(status = ChatStatus.Loading)
-        }
+        _state.set { current -> current.copy(status = ChatStatus.Loading) }
 
         // Maps domain messages to API request history objects
         val conversationHistory = _state.value.messages.map { msg -> msg.toContent() }
@@ -126,7 +122,7 @@ class ActiveChatViewModel(
             try {
                 apiService.generateContentStream(conversationHistory)
                     .catch { e ->
-                        _state.update { current ->
+                        _state.set { current ->
                             current.copy(
                                 status = ChatStatus.Error(
                                     R.string.active_chat_default_error_message,
@@ -136,16 +132,15 @@ class ActiveChatViewModel(
                         }
                     }
                     .collect { chunk ->
-                        val observedState = _state.value
-                        if (observedState.status is ChatStatus.Loading) { // first chunk
-                            _state.emit(
-                                value = _state.value.copy(
-                                    messages = observedState.messages + ChatMessage(text = chunk, Role.MODEL),
+                        if (_state.value.status is ChatStatus.Loading) { // first chunk
+                            _state.set { current ->
+                                current.copy(
+                                    messages = current.messages + ChatMessage(text = chunk, Role.MODEL),
                                     status = ChatStatus.Receiving
                                 )
-                            )
+                            }
                         } else {
-                            _state.update { current ->
+                            _state.set { current ->
                                 val lastMessage = current.messages.last()
                                 current.copy(
                                     messages = current.messages.dropLast(1) + lastMessage.copy(text = lastMessage.text + chunk),
@@ -156,7 +151,7 @@ class ActiveChatViewModel(
                     }
             } finally {
                 if (_state.value.status !is ChatStatus.Error)
-                    _state.update { current -> current.copy(status = ChatStatus.Idle) }
+                    _state.set { current -> current.copy(status = ChatStatus.Idle) }
 
                 val lastMessage = _state.value.messages.last()
                 if (lastMessage.sender == Role.MODEL)       // TODO: REVER ISTO (FAZER ISTO AQUI ??? E SE HOUVER UM RETRY QUE FALHA TAMBÉM?)
@@ -173,7 +168,7 @@ class ActiveChatViewModel(
      */
     fun dismissError(){
         if (_state.value.status is ChatStatus.Error) {
-            _state.update { current -> current.copy(status = ChatStatus.Idle) }
+            _state.set { current -> current.copy(status = ChatStatus.Idle) }
         }
     }
 
@@ -189,11 +184,8 @@ class ActiveChatViewModel(
         }
 
         val lastMessage = _state.value.messages.lastOrNull()
-
         if (lastMessage?.sender == Role.MODEL) {
-            _state.update { current ->
-                current.copy(messages = current.messages.dropLast(1))
-            }
+            _state.set { current -> current.copy(messages = current.messages.dropLast(1)) }
         }
 
         startGeneration()
