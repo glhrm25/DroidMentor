@@ -2,6 +2,7 @@ package com.example.droidmentor.data.repository
 
 import com.example.droidmentor.data.local.entity.ConversationEntity
 import com.example.droidmentor.data.local.entity.MessageEntity
+import com.example.droidmentor.data.model.ConversationSnapshot
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -30,6 +31,8 @@ interface ConversationRepository {
 
     /**
      * Creates a new conversation with the specified title and returns its ID.
+     * The new conversation becomes the single active session (any previous one is deactivated),
+     * so that the app can resume it on the next launch if it is not explicitly closed.
      */
     suspend fun createConversation(title: String): Long
 
@@ -39,12 +42,26 @@ interface ConversationRepository {
     suspend fun updateConversation(conversation: ConversationEntity)
 
     /**
-     * Deletes a conversation by its ID.
+     * Deletes a conversation and all of its messages.
+     *
+     * @return A [ConversationSnapshot] of the removed data, usable with [restoreConversation]
+     * to undo the removal, or `null` if no conversation with the given [id] exists.
      */
-    suspend fun deleteConversation(id: Long)
+    suspend fun deleteConversation(id: Long): ConversationSnapshot?
 
     /**
-     * Sets a conversation as the active session.
+     * Restores a previously deleted conversation and its messages, keeping the original IDs.
+     * The restored conversation is never marked as the active session.
+     */
+    suspend fun restoreConversation(snapshot: ConversationSnapshot)
+
+    /**
+     * Deletes every conversation and all of their messages.
+     */
+    suspend fun deleteAllConversations()
+
+    /**
+     * Sets a conversation as the single active session.
      */
     suspend fun setActiveConversation(id: Long)
 

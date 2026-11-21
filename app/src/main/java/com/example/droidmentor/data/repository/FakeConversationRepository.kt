@@ -2,6 +2,7 @@ package com.example.droidmentor.data.repository
 
 import com.example.droidmentor.data.local.entity.ConversationEntity
 import com.example.droidmentor.data.local.entity.MessageEntity
+import com.example.droidmentor.data.model.ConversationSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -27,6 +28,7 @@ class FakeConversationRepository : ConversationRepository {
         conversations.value.firstOrNull { it.isActive }
 
     override suspend fun createConversation(title: String): Long {
+        clearActiveConversation()
         val now = System.currentTimeMillis()
         val conversation = ConversationEntity(
             id = nextConversationId++,
@@ -44,9 +46,27 @@ class FakeConversationRepository : ConversationRepository {
             conversations.value.map { if (it.id == conversation.id) conversation else it }
     }
 
-    override suspend fun deleteConversation(id: Long) {
+    override suspend fun deleteConversation(id: Long): ConversationSnapshot? {
+        val conversation = getConversationById(id) ?: return null
+        val snapshot = ConversationSnapshot(
+            conversation,
+            messages.value.filter { it.conversationId == id }.sortedBy { it.timestamp }
+        )
         conversations.value = conversations.value.filterNot { it.id == id }
         messages.value = messages.value.filterNot { it.conversationId == id }
+        return snapshot
+    }
+
+    override suspend fun restoreConversation(snapshot: ConversationSnapshot) {
+        val restored = snapshot.conversation.copy(isActive = false)
+        conversations.value = conversations.value.filterNot { it.id == restored.id } + restored
+        val restoredIds = snapshot.messages.map { it.id }.toSet()
+        messages.value = messages.value.filterNot { it.id in restoredIds } + snapshot.messages
+    }
+
+    override suspend fun deleteAllConversations() {
+        conversations.value = emptyList()
+        messages.value = emptyList()
     }
 
     override suspend fun setActiveConversation(id: Long) {

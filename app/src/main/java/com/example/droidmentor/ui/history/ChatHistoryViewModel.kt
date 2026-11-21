@@ -4,11 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.droidmentor.data.local.entity.ConversationEntity
+import com.example.droidmentor.data.model.ConversationSnapshot
 import com.example.droidmentor.data.repository.ConversationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -17,10 +18,13 @@ import kotlinx.coroutines.launch
  *
  * @property conversations List of saved conversations from the database.
  * @property isLoading Indicates whether conversations are currently being loaded.
+ * @property recentlyDeleted The last removed conversation while its removal can still be undone,
+ * or `null` when there is nothing to undo.
  */
 data class ChatHistoryUiState(
     val conversations: List<ConversationEntity> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val recentlyDeleted: ConversationEntity? = null
 )
 
 /**
@@ -34,11 +38,21 @@ class ChatHistoryViewModel(
 ) : ViewModel() {
 
     /**
+     * Snapshot of the last removed conversation, kept while the user may still undo the removal.
+     */
+    private val lastDeleted = MutableStateFlow<ConversationSnapshot?>(null)
+
+    /**
      * UI state stream observing saved conversations from the database.
      */
-    val uiState: StateFlow<ChatHistoryUiState> = repository.allConversations
-        .map { list -> ChatHistoryUiState(conversations = list, isLoading = false) }
-        .stateIn(
+    val uiState: StateFlow<ChatHistoryUiState> =
+        combine(repository.allConversations, lastDeleted) { list, deleted ->
+            ChatHistoryUiState(
+                conversations = list,
+                isLoading = false,
+                recentlyDeleted = deleted?.conversation
+            )
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ChatHistoryUiState(isLoading = true)
@@ -46,12 +60,65 @@ class ChatHistoryViewModel(
 
     /**
      * Deletes a conversation and its messages from the database.
+     * The removal can be reverted with [undoDelete] until [dismissUndo] is called.
      *
      * @param id The unique identifier of the conversation to delete.
      */
     fun deleteConversation(id: Long) {
         viewModelScope.launch {
-            repository.deleteConversation(id)
+            repository.deleteConversation(id)?.let { snapshot -> lastDeleted.value = snapshot }
+        }
+    }
+
+    /**
+     * Restores the last deleted conversation, including all of its messages.
+     */
+    fun undoDelete() {
+        val snapshot = lastDeleted.value ?: return
+        lastDeleted.value = null
+        viewModelScope.launch {
+            repository.restoreConversation(snapshot)
+        }
+    }
+
+    /**
+     * Discards the possibility of undoing the last removal (e.g. the undo message timed out).
+     */
+    fun dismissUndo() {
+        lastDeleted.value = null
+    }
+
+    /**
+     * Deletes every saved conversation. This action cannot be undone.
+     */
+    fun deleteAllConversations() {
+        lastDeleted.value = null
+        viewModelScope.launch {
+            repository.deleteAllConversations()
+        }
+    }
+
+    /**
+     * Marks the given conversation as the active session before opening it, so that it is
+     * resumed automatically if the app is terminated while the conversation is open.
+     *
+     * @param id The conversation to open.
+     * @param onReady Callback invoked (on the main thread) once the session has been marked.
+     */
+    fun openConversation(id: Long, onReady: (Long) -> Unit) {
+        viewModelScope.launch {
+            repository.setActiveConversation(id)
+            onReady(id)
+        }
+    }
+
+    /**
+     * Closes the active session. Called when the user explicitly navigates back from the
+     * Active Chat screen to this screen.
+     */
+    fun endActiveSession() {
+        viewModelScope.launch {
+            repository.clearActiveConversation()
         }
     }
 

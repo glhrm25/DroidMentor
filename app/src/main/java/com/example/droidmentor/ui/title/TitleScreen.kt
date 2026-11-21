@@ -136,6 +136,34 @@ fun TitleScreen(
 }
 
 /**
+ * Placeholder shown while the app decides, at launch, whether to resume the last conversation.
+ *
+ * @param isResuming `true` once it is known that a previous conversation is being resumed.
+ */
+@Composable
+fun StartupLoadingScreen(isResuming: Boolean, modifier: Modifier = Modifier) {
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            if (isResuming) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.startup_resuming_session),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
  * Reusable menu card component displaying an icon, title, and description.
  */
 @Composable
