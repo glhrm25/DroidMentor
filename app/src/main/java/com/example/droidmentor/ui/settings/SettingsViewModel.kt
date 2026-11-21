@@ -8,29 +8,40 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import java.util.concurrent.Flow
 
+sealed class StateApi{
+    open val apiKey = ""
+     class IdleApiKey(): StateApi()
+     class LoadingApiKey (override val apiKey:String ): StateApi()
+     class ValueApiKey(override val apiKey: String): StateApi()
+
+}
 class SettingsViewModel(
     private val repository: PreferencesRepository
 ) : ViewModel() {
 
-    private val _apiKey = MutableStateFlow("")
-    val apiKey: StateFlow<String> = _apiKey.asStateFlow()
+    private val _apiKey = MutableStateFlow<StateApi>(StateApi.IdleApiKey() )
+    val apiKey: StateFlow<StateApi> = _apiKey.asStateFlow()
 
     init {
         viewModelScope.launch {
+            _apiKey.value = StateApi.LoadingApiKey(_apiKey.value.apiKey)
             val key = repository.apiKey.first()
-            _apiKey.value = key ?: ""
+            _apiKey.value = if ( key != null ) StateApi.ValueApiKey(key) else StateApi.IdleApiKey()
         }
     }
 
+
     fun updateApiKey(newKey: String) {
-        _apiKey.value = newKey
+        _apiKey.value = StateApi.ValueApiKey(newKey)
     }
 
     fun saveApiKey() {
         viewModelScope.launch {
-            repository.saveApiKey(_apiKey.value)
+            repository.saveApiKey(_apiKey.value.apiKey)
         }
     }
 

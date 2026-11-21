@@ -8,7 +8,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Duration.Companion.milliseconds
-
+/** Base de dados persistente, guarda objetos simples chave valor
+ * */
 class DataStorePreferencesRepository(private val dataStore: DataStore<Preferences>) : PreferencesRepository {
 
     companion object {

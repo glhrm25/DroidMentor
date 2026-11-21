@@ -3,15 +3,18 @@ package com.example.droidmentor.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,14 +25,15 @@ fun SettingsScreen(
     onDebouce: Duration = 10.milliseconds
 
 ) {
-    var  apiKey by remember { mutableStateOf("") }
+    val apiState by viewModel.apiKey.collectAsState()
 
-
-    LaunchedEffect(apiKey) {
-        if (apiKey != "" && apiKey.length > 30){
-                viewModel.updateApiKey(apiKey)
-        }
+    // O texto fica vazio ou preenchido com a chave final. 
+    // O Compose sincroniza automaticamente a variável "text" quando apiState é lido do disco!
+    var text by rememberSaveable(apiState) {
+        mutableStateOf((apiState as? StateApi.ValueApiKey)?.apiKey ?: "")
     }
+    val cond = apiState !is StateApi.LoadingApiKey
+
 
     Scaffold(
         topBar = {
@@ -57,15 +61,21 @@ fun SettingsScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             OutlinedTextField(
-                value = apiKey,
-                onValueChange = { apiKey = it },
+                value = text,
+                onValueChange = { text = it },
                 label = { Text("API Key") },
+                enabled =   cond,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = viewModel::saveApiKey,
+                onClick = {
+                    viewModel.updateApiKey(text)
+                    viewModel.saveApiKey()
+                    onNavigateBack()
+                },
+                enabled = cond,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save Key")
