@@ -69,20 +69,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation("androidx.compose.material:material-icons-extended")
-    // Engine Android mantida, atualizada para Ktor 3
-    implementation("io.ktor:ktor-client-android:3.1.1")
 
-// Plugin para conversão/gerenciamento de JSON (ContentNegotiation)
-    implementation("io.ktor:ktor-client-content-negotiation:3.1.1")
-
-// Suporte para kotlinx.serialization dentro do Ktor
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.1")
-
-// Plugin de Logging do Ktor (para ver as chamadas no Logcat)
-    implementation("io.ktor:ktor-client-logging:3.1.1")
-
-// Biblioteca base do Kotlinx Serialization JSON (compatível com Ktor 3)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    // Ktor
+    implementation("io.ktor:ktor-client-okhttp:3.6.1")
+    implementation("io.ktor:ktor-client-content-negotiation:3.6.1")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
 
     // Room Persistence Library
     implementation(libs.androidx.room.runtime)
