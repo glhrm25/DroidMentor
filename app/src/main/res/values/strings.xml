@@ -10,6 +10,8 @@
     <string name="active_chat_ignore_error_button_desc">Ignore</string>
     <string name="active_chat_default_error_message">An error happened while trying to communicate with mentor. %1$s</string>
     <string name="active_chat_missing_key_message">Your api key is missing.</string>
+    <string name="chat_empty_title">Start the conversation</string>
+    <string name="chat_empty_subtitle">Write your first message below.</string>
 
     <!-- Title Screen -->
     <string name="title_tagline">Your Senior Android Engineering Mentor</string>

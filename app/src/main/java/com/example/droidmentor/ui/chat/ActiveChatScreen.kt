@@ -20,6 +20,7 @@ import com.example.droidmentor.data.model.chat.Role
 import com.example.droidmentor.ui.chat.components.ChatBubble
 import com.example.droidmentor.ui.chat.components.ChatErrorBanner
 import com.example.droidmentor.ui.chat.components.ChatInputBar
+import com.example.droidmentor.ui.chat.components.EmptyChatPlaceholder
 
 
 /**
@@ -160,35 +161,43 @@ fun ActiveChatScreenContent(
             }
         }
     ) { innerPadding ->        // space left between top bar and bottom bar
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)       // space between the message bubbles
+        Box(
+            modifier = modifier
         ) {
-            items(messages) { message ->
-                ChatBubble(message = message)
+            if (messages.isEmpty()) {
+                EmptyChatPlaceholder(modifier = Modifier.align(Alignment.Center))
             }
 
-            if (isWaiting) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(36.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)       // space between the message bubbles
+            ) {
+                items(messages) { message ->
+                    ChatBubble(message = message)
+                }
+
+                if (isWaiting) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(36.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
-            }
 
-            item(key = "bottom_spacer") {
-                Spacer(modifier = Modifier.height(16.dp))
+                item(key = "bottom_spacer") {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
