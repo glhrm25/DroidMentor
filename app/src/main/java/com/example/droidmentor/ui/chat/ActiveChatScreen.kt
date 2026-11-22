@@ -22,6 +22,7 @@ import com.example.droidmentor.ui.chat.components.ChatBubble
 import com.example.droidmentor.ui.chat.components.ChatErrorBanner
 import com.example.droidmentor.ui.chat.components.ChatInputBar
 import com.example.droidmentor.ui.chat.components.EmptyChatPlaceholder
+import com.example.droidmentor.ui.chat.components.TopBarBanner
 
 
 /**
@@ -130,25 +131,7 @@ fun ActiveChatScreenContent(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                navigationIcon = {
-                    IconButton(
-                        onClick = { onNavigateBack() }
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.back_button_desc)
-                        )
-                    }
-                }
-            )
-        },
+        topBar = { TopBarBanner(stringResource(R.string.app_name) ,onNavigateBack ) } ,
         bottomBar = {
             Column{
                 if (status is ChatStatus.Error) {

@@ -1,10 +1,15 @@
 package com.example.droidmentor.ui.about
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.droidmentor.R
+import com.example.droidmentor.ui.chat.components.TopBarBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -13,16 +18,7 @@ fun AboutScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("About DroidMentor") },
-                navigationIcon = {
-                    Button(onClick = onNavigateBack) {
-                        Text("Back")
-                    }
-                }
-            )
-        },
+        topBar = { TopBarBanner(stringResource(R.string.menu_about) ,onNavigateBack ) },
         modifier = modifier
     ) { innerPadding ->
         Column(

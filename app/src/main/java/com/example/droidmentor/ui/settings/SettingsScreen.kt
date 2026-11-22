@@ -1,6 +1,8 @@
 package com.example.droidmentor.ui.settings
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,6 +17,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.example.droidmentor.R
+import com.example.droidmentor.ui.chat.components.TopBarBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,16 +41,7 @@ fun SettingsScreen(
 
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    Button(onClick = onNavigateBack) {
-                        Text("Back")
-                    }
-                }
-            )
-        },
+        topBar = { TopBarBanner(stringResource(R.string.app_name) ,onNavigateBack ) },
         modifier = modifier
     ) { innerPadding ->
         Column(
