@@ -81,6 +81,22 @@ interface ConversationRepository {
     suspend fun addMessage(conversationId: Long, role: String, text: String): Long
 
     /**
+     * Deletes a single message.
+     * @param messageId The identifier of the message (as returned by [addMessage]).
+     * @return Whether the message was deleted (false if there is no such message).
+     */
+    suspend fun deleteMessage(messageId: Long): Boolean
+
+    /**
+     * Deletes a message along with every message that follows it in the same conversation,
+     * in the order given by [getMessages]. Meant for rewriting a message: the rewritten message
+     * and the replies to it are removed, and the new version is then added with [addMessage].
+     * @param messageId The identifier of the first message to delete (as returned by [addMessage]).
+     * @return The number of deleted messages (0 if there is no such message).
+     */
+    suspend fun deleteMessagesFrom(messageId: Long): Int
+
+    /**
      * Deletes all messages in a conversation sent after a given timestamp (for editing/rewriting).
      */
     suspend fun deleteMessagesAfter(conversationId: Long, timestamp: Long)

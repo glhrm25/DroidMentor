@@ -91,6 +91,14 @@ class RoomConversationRepository(
         return messageId
     }
 
+    override suspend fun deleteMessage(messageId: Long): Boolean {
+        return messageDao.deleteMessageById(messageId) > 0
+    }
+
+    override suspend fun deleteMessagesFrom(messageId: Long): Int {
+        return messageDao.deleteMessagesFrom(messageId)
+    }
+
     override suspend fun deleteMessagesAfter(conversationId: Long, timestamp: Long) {
         messageDao.deleteMessagesAfter(conversationId, timestamp)
     }

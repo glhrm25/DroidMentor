@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -17,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies conversation removal and session persistence against a real (in-memory) Room database.
+ * Verifies conversation and message removal and session persistence against a real (in-memory) Room database.
  */
 @RunWith(AndroidJUnit4::class)
 class ConversationRepositoryRoomTest {
@@ -85,6 +86,72 @@ class ConversationRepositoryRoomTest {
 
         // Assert
         assertTrue(repository.allConversations.first().isEmpty())
+    }
+
+    @Test
+    fun deleteMessage_whenItExists_removesOnlyThatMessage() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        repository.addMessage(id, "USER", "Question")
+        val reply = repository.addMessage(id, "MODEL", "Partial answer")
+
+        // Act
+        val deleted = repository.deleteMessage(reply)
+
+        // Assert
+        assertTrue(deleted)
+        assertEquals(listOf("Question"), repository.getMessages(id).first().map { it.text })
+    }
+
+    @Test
+    fun deleteMessage_whenItDoesNotExist_returnsFalse() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        repository.addMessage(id, "USER", "Question")
+
+        // Act
+        val deleted = repository.deleteMessage(messageId = 999)
+
+        // Assert
+        assertFalse(deleted)
+        assertEquals(1, repository.getMessages(id).first().size)
+    }
+
+    @Test
+    fun deleteMessagesFrom_whenMessageIsInTheMiddle_removesItAndTheFollowingOnes() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        val otherId = repository.createConversation("Other chat")
+        repository.addMessage(id, "USER", "First question")
+        repository.addMessage(id, "MODEL", "First answer")
+        val rewritten = repository.addMessage(id, "USER", "Second question")
+        repository.addMessage(otherId, "USER", "Unrelated")
+        repository.addMessage(id, "MODEL", "Second answer")
+
+        // Act
+        val deleted = repository.deleteMessagesFrom(rewritten)
+
+        // Assert
+        assertEquals(2, deleted)
+        assertEquals(
+            listOf("First question", "First answer"),
+            repository.getMessages(id).first().map { it.text }
+        )
+        assertEquals(listOf("Unrelated"), repository.getMessages(otherId).first().map { it.text })
+    }
+
+    @Test
+    fun deleteMessagesFrom_whenMessageDoesNotExist_deletesNothing() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        repository.addMessage(id, "USER", "Question")
+
+        // Act
+        val deleted = repository.deleteMessagesFrom(messageId = 999)
+
+        // Assert
+        assertEquals(0, deleted)
+        assertEquals(1, repository.getMessages(id).first().size)
     }
 
     @Test

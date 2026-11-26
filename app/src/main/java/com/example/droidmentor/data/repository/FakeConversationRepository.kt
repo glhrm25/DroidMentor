@@ -96,6 +96,23 @@ class FakeConversationRepository : ConversationRepository {
         return message.id
     }
 
+    override suspend fun deleteMessage(messageId: Long): Boolean {
+        val before = messages.value.size
+        messages.value = messages.value.filterNot { it.id == messageId }
+        return messages.value.size < before
+    }
+
+    override suspend fun deleteMessagesFrom(messageId: Long): Int {
+        val first = messages.value.firstOrNull { it.id == messageId } ?: return 0
+        val toDelete = messages.value.filter {
+            it.conversationId == first.conversationId &&
+                (it.timestamp > first.timestamp ||
+                    (it.timestamp == first.timestamp && it.id >= first.id))
+        }
+        messages.value -= toDelete.toSet()
+        return toDelete.size
+    }
+
     override suspend fun deleteMessagesAfter(conversationId: Long, timestamp: Long) {
         messages.value = messages.value.filterNot {
             it.conversationId == conversationId && it.timestamp > timestamp
