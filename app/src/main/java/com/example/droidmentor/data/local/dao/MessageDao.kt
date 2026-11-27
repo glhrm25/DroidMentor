@@ -30,6 +30,12 @@ interface MessageDao {
     suspend fun getMessagesForConversationSync(conversationId: Long): List<MessageEntity>
 
     /**
+     * Retrieves a single message by its identifier.
+     */
+    @Query("SELECT * FROM messages WHERE id = :messageId")
+    suspend fun getMessageById(messageId: Long): MessageEntity?
+
+    /**
      * Inserts a single message into the database.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

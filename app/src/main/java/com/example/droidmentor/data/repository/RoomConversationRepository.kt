@@ -91,6 +91,15 @@ class RoomConversationRepository(
         return messageId
     }
 
+    override suspend fun updateMessage(messageId: Long, text: String): Boolean {
+        val message = messageDao.getMessageById(messageId) ?: return false
+        messageDao.updateMessage(message.copy(text = text))
+        getConversationById(message.conversationId)?.let { conv ->
+            conversationDao.updateConversation(conv.copy(updatedAt = System.currentTimeMillis()))
+        }
+        return true
+    }
+
     override suspend fun deleteMessage(messageId: Long): Boolean {
         return messageDao.deleteMessageById(messageId) > 0
     }

@@ -81,6 +81,16 @@ interface ConversationRepository {
     suspend fun addMessage(conversationId: Long, role: String, text: String): Long
 
     /**
+     * Replaces the text of a message, keeping its position in the conversation, and updates the
+     * conversation's updatedAt timestamp. Meant for rewriting a message: the messages that follow
+     * it are not touched, so they must be removed separately (they are no longer valid).
+     * @param messageId The identifier of the message (as returned by [addMessage]).
+     * @param text The new text of the message.
+     * @return Whether the message was updated (false if there is no such message).
+     */
+    suspend fun updateMessage(messageId: Long, text: String): Boolean
+
+    /**
      * Deletes a single message.
      * @param messageId The identifier of the message (as returned by [addMessage]).
      * @return Whether the message was deleted (false if there is no such message).

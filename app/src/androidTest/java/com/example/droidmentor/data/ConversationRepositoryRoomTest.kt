@@ -89,6 +89,38 @@ class ConversationRepositoryRoomTest {
     }
 
     @Test
+    fun updateMessage_whenItExists_replacesTheTextKeepingTheOrder() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        val question = repository.addMessage(id, "USER", "Original question")
+        repository.addMessage(id, "MODEL", "Answer")
+
+        // Act
+        val updated = repository.updateMessage(question, "Rewritten question")
+
+        // Assert
+        assertTrue(updated)
+        assertEquals(
+            listOf("Rewritten question", "Answer"),
+            repository.getMessages(id).first().map { it.text }
+        )
+    }
+
+    @Test
+    fun updateMessage_whenItDoesNotExist_returnsFalse() = runTest {
+        // Arrange
+        val id = repository.createConversation("Chat")
+        repository.addMessage(id, "USER", "Question")
+
+        // Act
+        val updated = repository.updateMessage(messageId = 999, text = "Rewritten")
+
+        // Assert
+        assertFalse(updated)
+        assertEquals(listOf("Question"), repository.getMessages(id).first().map { it.text })
+    }
+
+    @Test
     fun deleteMessage_whenItExists_removesOnlyThatMessage() = runTest {
         // Arrange
         val id = repository.createConversation("Chat")

@@ -96,6 +96,15 @@ class FakeConversationRepository : ConversationRepository {
         return message.id
     }
 
+    override suspend fun updateMessage(messageId: Long, text: String): Boolean {
+        val message = messages.value.firstOrNull { it.id == messageId } ?: return false
+        messages.value = messages.value.map { if (it.id == messageId) it.copy(text = text) else it }
+        getConversationById(message.conversationId)?.let {
+            updateConversation(it.copy(updatedAt = System.currentTimeMillis()))
+        }
+        return true
+    }
+
     override suspend fun deleteMessage(messageId: Long): Boolean {
         val before = messages.value.size
         messages.value = messages.value.filterNot { it.id == messageId }
